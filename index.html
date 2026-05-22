@@ -3,195 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Material Dourado Digital - Master Edition v6.4</title>
+    <title>Material Dourado - Eidos Lite Modal (Troca Mágica)</title>
     <style>
         :root {
             --cor-madeira: #dfa85f;
             --cor-madeira-escura: #c68e46;
             --cor-borda: #8d622a;
-            --tamanho-base: 25px;
-            --altura-menu: 200px;
+            --tamanho-base: 25px; 
+            --altura-menu: 90px; 
         }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            user-select: none; 
-            -webkit-touch-callout: none; /* DESATIVA MENU NATIVO iOS */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-touch-callout: none; -ms-touch-action: none; }
+
+        body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: sans-serif; overflow: hidden; background: #ecf0f1; }
+
+        #btn-config {
+            position: fixed; top: 15px; right: 15px; z-index: 2500;
+            width: 48px; height: 48px; background: #34495e; 
+            border: 2px solid #1a252f; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
 
-        body { 
-            margin: 0; display: flex; flex-direction: column; 
-            height: 100dvh; font-family: sans-serif; 
-            overflow: hidden; background: #ecf0f1; 
+        #modal-config {
+            display: none; flex-direction: column; 
+            position: fixed; top: 75px; right: 15px; z-index: 3000;
+            background: #2c3e50; border: 2px solid #1a252f; border-radius: 12px;
+            padding: 16px; min-width: 240px; 
         }
 
-        /* AVISO FLUTUANTE (TOAST) */
+        .modal-header { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 16px; margin-bottom: 16px; border-bottom: 2px solid #1a252f; padding-bottom: 12px; }
+        .btn-fechar { cursor: pointer; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; background: transparent; }
+        .modal-body { display: flex; flex-direction: column; gap: 16px; }
+
+        .zoom-container { display: flex; align-items: center; justify-content: space-between; color: white; font-weight: bold; font-size: 14px; }
+        .zoom-botoes { display: flex; gap: 6px; }
+        .btn-menor { width: 40px; height: 40px; font-size: 20px; font-weight: bold; cursor: pointer; background: #7f8c8d; color: white; border: none; border-radius: 8px; }
+        #btn-limpar { background: #e74c3c; color: white; border: none; height: 42px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; border-bottom: 3px solid #c0392b; width: 100%; }
+
+        .config-switches { display: flex; flex-direction: column; gap: 12px; }
+        .switch-container { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: white; font-size: 13px; font-weight: bold; }
+        .switch { position: relative; display: inline-block; width: 48px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #7f8c8d; transition: .4s; border-radius: 34px; border: 2px solid #1a252f;}
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; transition: .4s; border-radius: 50%; }
+        
+        input:checked + .slider { background: #2ecc71; border-color: #27ae60;}
+        input:checked + .slider:before { transform: translateX(24px); }
+        
+        input:checked#toggle-limite + .slider { background: #e67e22; border-color: #d35400;}
+        input:checked#toggle-substituicao + .slider { background: #9b59b6; border-color: #8e44ad;} /* Cor mágica roxa */
+
         #toast-aviso {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #e74c3c;
-            color: white;
-            padding: 15px 30px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            z-index: 9999;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #e74c3c; color: white; padding: 10px 25px; border-radius: 8px;
+            font-size: 15px; font-weight: bold; border: 2px solid #c0392b; 
+            z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
         .toast-visivel { opacity: 1 !important; }
+        .toast-magica { background: #9b59b6 !important; border-color: #8e44ad !important; transform: translateX(-50%) scale(1.1) !important;}
 
-        #container-lousa {
-            flex-grow: 1; overflow: auto; position: relative;
-            touch-action: none; cursor: grab;
-        }
-        
+        #container-lousa { flex-grow: 1; overflow: auto; position: relative; touch-action: none; cursor: grab; -webkit-overflow-scrolling: touch; }
         #container-lousa:active { cursor: grabbing; }
 
         #lousa {
             width: 4000px; height: 4000px; position: relative;
-            background-image: 
-                linear-gradient(to right, #d0d7de 1px, transparent 1px),
-                linear-gradient(to bottom, #d0d7de 1px, transparent 1px);
-            background-size: var(--tamanho-base) var(--tamanho-base);
-            touch-action: none;
+            background-image: linear-gradient(to right, #d0d7de 1px, transparent 1px), linear-gradient(to bottom, #d0d7de 1px, transparent 1px);
+            background-size: var(--tamanho-base) var(--tamanho-base); touch-action: none; -webkit-transform: translateZ(0); 
         }
 
         #menu {
-            height: var(--altura-menu);
-            background: #2c3e50;
-            display: flex; align-items: center; 
-            justify-content: center; 
-            gap: 80px; 
-            padding: 0 40px;
-            border-top: 6px solid #1a252f; z-index: 2000;
-            position: relative;
-            touch-action: none;
+            height: var(--altura-menu); background: #2c3e50;
+            display: flex; align-items: center; justify-content: center; gap: 15px; 
+            padding: 0 10px; border-top: 4px solid #1a252f; z-index: 2000; position: relative; touch-action: none;
         }
 
-        .secao-sistema { display: flex; gap: 20px; align-items: flex-end; }
-
-        .zoom-container { display: flex; flex-direction: column; align-items: center; gap: 5px; color: white; font-size: 11px; font-weight: bold; }
-        .zoom-botoes { display: flex; gap: 5px; }
-
-        .btn-menor { width: 40px; height: 40px; font-size: 20px; font-weight: bold; cursor: pointer; background: #7f8c8d; color: white; border: none; border-radius: 5px; }
-        #btn-limpar { background: #e74c3c; color: white; border: none; height: 40px; padding: 0 15px; border-radius: 5px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #c0392b; }
-
-        .config-switches { display: flex; flex-direction: column; gap: 10px; }
-        .switch-container { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: white; font-size: 11px; font-weight: bold; min-width: 100px; }
-        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #7f8c8d; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #2ecc71; }
-        input:checked + .slider:before { transform: translateX(22px); }
-        input:checked#toggle-limite + .slider { background-color: #e67e22; }
-
-        .secao-interacao { display: flex; gap: 15px; align-items: center; }
-
-        .area-interacao { display: flex; align-items: center; gap: 10px; background: #34495e; padding: 12px; border-radius: 12px; border: 2px solid #1a252f; }
-        .item-peca { cursor: grab; width: 55px; height: 55px; background: #2c3e50; border: 1px solid #617083; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; }
-        .placar-cdu { font-family: 'Courier New', monospace; font-size: 38px; font-weight: bold; background: #2c3e50; width: 70px; height: 55px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #617083; }
+        .area-interacao { display: flex; align-items: center; gap: 8px; background: #34495e; padding: 8px 12px; border-radius: 10px; border: 2px solid #1a252f; }
+        .item-peca { cursor: grab; width: 48px; height: 48px; background: #2c3e50; border: 1px solid #617083; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .placar-cdu { font-family: 'Courier New', monospace; font-size: 30px; font-weight: bold; background: #2c3e50; width: 60px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #617083; }
 
         .cor-numero { color: #f1c40f !important; }
-        .cor-label { color: #95a5a6 !important; font-size: 32px; }
+        .cor-label { color: #95a5a6 !important; font-size: 26px; }
+        .thumb { transform: scale(0.8); }
+        .t-m { transform: scale(0.8) translate(-4px, 4px); margin-left: 4px; }
 
-        .peca { background: var(--cor-madeira); border: 1px solid var(--cor-borda); position: absolute; cursor: grab; display: grid; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); touch-action: none; z-index: 1000; }
-        .peca.dragging { transform: scale(1.1) !important; opacity: 0.7 !important; z-index: 5000 !important; transition: none !important; pointer-events: none; }
+        .peca { background: var(--cor-madeira); border: 1.5px solid var(--cor-borda); position: absolute; cursor: grab; display: grid; touch-action: none; z-index: 1000; -webkit-transform: translateZ(0); }
+        .peca.dragging { transform: scale(1.1) !important; opacity: 0.7 !important; z-index: 5000 !important; pointer-events: none; }
+
+        /* A ANIMAÇÃO DO SUSTO */
+        @keyframes bumMagico {
+            0% { transform: scale(0.2); filter: brightness(3); opacity: 0; }
+            50% { transform: scale(1.5); filter: brightness(1.5); opacity: 1; z-index: 6000; }
+            100% { transform: scale(1); filter: brightness(1); opacity: 1; }
+        }
+        .animacao-bum { animation: bumMagico 0.5s ease-out forwards; }
 
         .unidade { width: var(--tamanho-base); height: var(--tamanho-base); }
         .dezena { width: var(--tamanho-base); height: calc(var(--tamanho-base) * 10); grid-template-rows: repeat(10, 1fr); }
         .centena { width: calc(var(--tamanho-base) * 10); height: calc(var(--tamanho-base) * 10); grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); }
 
-        /* LÓGICA DO MILHAR 12x12 */
-        .milhar { 
-            width: calc(var(--tamanho-base) * 12); 
-            height: calc(var(--tamanho-base) * 12); 
-            background: transparent !important; 
-            border: none !important; 
-            box-shadow: none !important; 
-            display: block !important;
-        }
-        .milhar-base {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: calc(var(--tamanho-base) * 10);
-            height: calc(var(--tamanho-base) * 10);
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            grid-template-rows: repeat(10, 1fr);
-            background: var(--cor-madeira-escura);
-            border: 1px solid var(--cor-borda);
-            box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
-        }
-        .milhar-base::before {
-            content: "";
-            position: absolute;
-            bottom: 100%;
-            left: 0;
-            width: 100%;
-            height: calc(var(--tamanho-base) * 2);
-            background: var(--cor-madeira);
-            border: 1px solid var(--cor-borda);
-            border-bottom: none;
-            transform-origin: bottom left;
-            transform: skewX(-45deg);
-        }
-        .milhar-base::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 100%;
-            width: calc(var(--tamanho-base) * 2);
-            height: 100%;
-            background: #8b5a2b;
-            border: 1px solid var(--cor-borda);
-            border-left: none;
-            transform-origin: bottom left;
-            transform: skewY(-45deg);
-        }
+        .milhar { width: calc(var(--tamanho-base) * 12); height: calc(var(--tamanho-base) * 12); background: transparent !important; border: none !important; display: block !important; }
+        .milhar-base { position: absolute; bottom: 0; left: 0; width: calc(var(--tamanho-base) * 10); height: calc(var(--tamanho-base) * 10); display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); background: var(--cor-madeira-escura); border: 1.5px solid var(--cor-borda); }
+        .milhar-base::before { content: ""; position: absolute; bottom: 100%; left: -1.5px; width: calc(100% + 1.5px); height: calc(var(--tamanho-base) * 2); background: var(--cor-madeira); border: 1.5px solid var(--cor-borda); border-bottom: none; transform-origin: bottom left; transform: skewX(-45deg); }
+        .milhar-base::after { content: ""; position: absolute; top: -1.5px; left: 100%; width: calc(var(--tamanho-base) * 2); height: calc(100% + 1.5px); background: #8b5a2b; border: 1.5px solid var(--cor-borda); border-left: none; transform-origin: bottom left; transform: skewY(-45deg); }
 
         .grid-line { border: 0.5px solid var(--cor-borda); pointer-events: none; }
         .thumb { background: var(--cor-madeira); border: 1px solid var(--cor-borda); margin: auto; pointer-events: none; }
         .t-u { width: 10px; height: 10px; }
         .t-d { width: 6px; height: 35px; }
         .t-c { width: 35px; height: 35px; }
-        
-        .t-m { 
-            width: 25px; height: 25px; 
-            background: var(--cor-madeira-escura); 
-            position: relative;
-            transform: translate(-4px, 4px); 
-            border: 1px solid var(--cor-borda);
-        }
-        .t-m::before {
-            content: ""; position: absolute; bottom: 100%; left: -1px; width: 100%; height: 10px; 
-            background: var(--cor-madeira); border: 1px solid var(--cor-borda);
-            transform-origin: bottom left; transform: skewX(-45deg); border-bottom: none;
-        }
-        .t-m::after {
-            content: ""; position: absolute; top: -1px; left: 100%; width: 10px; height: 100%;
-            background: #8b5a2b; border: 1px solid var(--cor-borda);
-            transform-origin: bottom left; transform: skewY(-45deg); border-left: none;
-        }
+        .t-m { width: 25px; height: 25px; background: var(--cor-madeira-escura); position: relative; border: 1px solid var(--cor-borda); }
+        .t-m::before { content: ""; position: absolute; bottom: 100%; left: -1px; width: 100%; height: 10px; background: var(--cor-madeira); border: 1px solid var(--cor-borda); border-bottom: none; transform-origin: bottom left; transform: skewX(-45deg); }
+        .t-m::after { content: ""; position: absolute; top: -1px; left: 100%; width: 10px; height: 100%; background: #8b5a2b; border: 1px solid var(--cor-borda); border-left: none; transform-origin: bottom left; transform: skewY(-45deg); }
     </style>
 </head>
 <body>
 
 <div id="toast-aviso"></div>
 
-<div id="container-lousa">
-    <div id="lousa"></div>
+<div id="btn-config" onclick="abrirConfig()">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="#ecf0f1">
+        <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+    </svg>
 </div>
 
-<div id="menu">
-    <div class="secao-sistema">
+<div id="modal-config">
+    <div class="modal-header">
+        <span>FERRAMENTAS</span>
+        <div class="btn-fechar" onclick="fecharConfig()">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="#e74c3c"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </div>
+    </div>
+    <div class="modal-body">
         <div class="zoom-container">
             <span>ZOOM</span>
             <div class="zoom-botoes">
@@ -199,223 +141,297 @@
                 <button class="btn-menor" onclick="mudarTamanho(5)">+</button>
             </div>
         </div>
-        <button id="btn-limpar" onclick="limparLousa()">Limpar</button>
         <div class="config-switches">
             <div class="switch-container"><span>VALORES</span><label class="switch"><input type="checkbox" id="toggle-cdu" onchange="toggleVisibilidadeNumeros()"><span class="slider"></span></label></div>
             <div class="switch-container"><span>LIMITE (9)</span><label class="switch"><input type="checkbox" id="toggle-limite"><span class="slider"></span></label></div>
+            <div class="switch-container" style="color: #f1c40f;"><span>TROCA MÁGICA (10)</span><label class="switch"><input type="checkbox" id="toggle-substituicao" onchange="verificarCascataGeral()"><span class="slider"></span></label></div>
         </div>
+        <button id="btn-limpar" onclick="limparLousa()">LIMPAR LOUSA</button>
     </div>
+</div>
 
-    <div class="secao-interacao">
-        <div class="area-interacao">
-            <div class="item-peca" data-tipo="milhar"><div class="thumb t-m"></div></div>
-            <div class="placar-cdu" id="p-milhar">M</div>
-        </div>
-        <div class="area-interacao">
-            <div class="item-peca" data-tipo="centena"><div class="thumb t-c"></div></div>
-            <div class="placar-cdu" id="p-centena">C</div>
-        </div>
-        <div class="area-interacao">
-            <div class="item-peca" data-tipo="dezena"><div class="thumb t-d"></div></div>
-            <div class="placar-cdu" id="p-dezena">D</div>
-        </div>
-        <div class="area-interacao">
-            <div class="item-peca" data-tipo="unidade"><div class="thumb t-u"></div></div>
-            <div class="placar-cdu" id="p-unidade">U</div>
-        </div>
+<div id="container-lousa">
+    <div id="lousa"></div>
+</div>
+
+<div id="menu">
+    <div class="area-interacao">
+        <div class="item-peca" data-tipo="milhar"><div class="thumb t-m"></div></div>
+        <div class="placar-cdu" id="p-milhar">M</div>
+    </div>
+    <div class="area-interacao">
+        <div class="item-peca" data-tipo="centena"><div class="thumb t-c"></div></div>
+        <div class="placar-cdu" id="p-centena">C</div>
+    </div>
+    <div class="area-interacao">
+        <div class="item-peca" data-tipo="dezena"><div class="thumb t-d"></div></div>
+        <div class="placar-cdu" id="p-dezena">D</div>
+    </div>
+    <div class="area-interacao">
+        <div class="item-peca" data-tipo="unidade"><div class="thumb t-u"></div></div>
+        <div class="placar-cdu" id="p-unidade">U</div>
     </div>
 </div>
 
 <script>
-    let tamanhoBase = 25;
-    const lousa = document.getElementById('lousa');
-    const containerLousa = document.getElementById('container-lousa');
-    const menu = document.getElementById('menu');
-    const cdu = { unidade: 0, dezena: 0, centena: 0, milhar: 0 };
-    let ocupacaoGrid = new Set();
-    let lockInteracao = false;
-    let pointerIdAtivo = null;
+    function handleAndroidBack() {
+        var modal = document.getElementById('modal-config');
+        if (modal.style.display === 'flex') { fecharConfig(); } 
+        else { if (window.AppInventor) window.AppInventor.setWebViewString("FECHAR_APP"); }
+    }
+    function abrirConfig() { document.getElementById('modal-config').style.display = 'flex'; }
+    function fecharConfig() { document.getElementById('modal-config').style.display = 'none'; }
 
-    let toastTimeout;
-    function mostrarAviso(msg) {
-        const toast = document.getElementById('toast-aviso');
+    var tamanhoBase = 25;
+    var lousa = document.getElementById('lousa');
+    var containerLousa = document.getElementById('container-lousa');
+    var cdu = { unidade: 0, dezena: 0, centena: 0, milhar: 0 };
+    var ocupacaoGrid = {}; 
+    var lockInteracao = false;
+    var pointerIdAtivo = null;
+
+    var toastTimeout;
+    function mostrarAviso(msg, magica) {
+        var toast = document.getElementById('toast-aviso');
         toast.innerText = msg;
+        if(magica) toast.classList.add('toast-magica'); else toast.classList.remove('toast-magica');
         toast.classList.add('toast-visivel');
         clearTimeout(toastTimeout);
-        toastTimeout = setTimeout(() => toast.classList.remove('toast-visivel'), 2500);
+        toastTimeout = setTimeout(function() { toast.classList.remove('toast-visivel'); toast.classList.remove('toast-magica'); }, 3000);
     }
 
-    let isPanning = false;
-    let startPanX, startPanY, startScrollLeft, startScrollTop;
-
-    containerLousa.addEventListener('pointerdown', (e) => {
+    var isPanning = false; var startPanX, startPanY, startScrollLeft, startScrollTop;
+    containerLousa.addEventListener('pointerdown', function(e) {
+        fecharConfig(); 
         if (lockInteracao || (e.target !== lousa && e.target !== containerLousa)) return;
-        lockInteracao = true; pointerIdAtivo = e.pointerId;
-        isPanning = true;
+        lockInteracao = true; pointerIdAtivo = e.pointerId; isPanning = true;
         startPanX = e.clientX; startPanY = e.clientY;
         startScrollLeft = containerLousa.scrollLeft; startScrollTop = containerLousa.scrollTop;
-        containerLousa.setPointerCapture(e.pointerId);
+        if(containerLousa.setPointerCapture) containerLousa.setPointerCapture(e.pointerId);
     });
-
-    containerLousa.addEventListener('pointermove', (e) => {
+    containerLousa.addEventListener('pointermove', function(e) {
         if (!isPanning || e.pointerId !== pointerIdAtivo) return;
         containerLousa.scrollLeft = startScrollLeft - (e.clientX - startPanX);
         containerLousa.scrollTop = startScrollTop - (e.clientY - startPanY);
     });
-
-    const encerrarPan = (e) => {
+    function encerrarPan(e) {
         if (!isPanning || e.pointerId !== pointerIdAtivo) return;
         isPanning = false; lockInteracao = false; pointerIdAtivo = null;
-    };
+        if(containerLousa.releasePointerCapture) containerLousa.releasePointerCapture(e.pointerId);
+    }
     containerLousa.addEventListener('pointerup', encerrarPan);
     containerLousa.addEventListener('pointercancel', encerrarPan);
 
     function obterDimensoes(tipo) {
-        if (tipo === 'milhar') return { w: 12, h: 12 };
-        if (tipo === 'centena') return { w: 10, h: 10 };
-        if (tipo === 'dezena') return { w: 1, h: 10 };
-        return { w: 1, h: 1 };
+        if (tipo === 'milhar') return { w: 12, h: 12 }; if (tipo === 'centena') return { w: 10, h: 10 };
+        if (tipo === 'dezena') return { w: 1, h: 10 }; return { w: 1, h: 1 };
     }
 
     function mudarTamanho(valor) {
-        const antigoTamanho = tamanhoBase;
-        const novoTamanho = Math.max(10, Math.min(80, tamanhoBase + valor));
+        var antigoTamanho = tamanhoBase;
+        var novoTamanho = Math.max(10, Math.min(80, tamanhoBase + valor));
         if (novoTamanho === antigoTamanho) return;
-        const vCX = containerLousa.scrollLeft + (containerLousa.clientWidth / 2);
-        const vCY = containerLousa.scrollTop + (containerLousa.clientHeight / 2);
-        ocupacaoGrid.clear();
-        tamanhoBase = novoTamanho;
+        var vCX = containerLousa.scrollLeft + (containerLousa.clientWidth / 2);
+        var vCY = containerLousa.scrollTop + (containerLousa.clientHeight / 2);
+        ocupacaoGrid = {}; tamanhoBase = novoTamanho;
         document.documentElement.style.setProperty('--tamanho-base', tamanhoBase + 'px');
-        const fator = novoTamanho / antigoTamanho;
-        document.querySelectorAll('#lousa .peca').forEach(peca => {
-            const pos = encontrarEspacoLivre(parseInt(peca.style.left) * fator, parseInt(peca.style.top) * fator, peca.dataset.tipo);
+        var fator = novoTamanho / antigoTamanho;
+        var pecas = document.querySelectorAll('#lousa .peca');
+        for(var i = 0; i < pecas.length; i++) {
+            var peca = pecas[i]; var tipo = peca.dataset.tipo;
+            var pos = encontrarEspacoLivre(parseInt(peca.style.left) * fator, parseInt(peca.style.top) * fator, tipo);
             peca.style.left = pos.x + 'px'; peca.style.top = pos.y + 'px';
-            gerenciarOcupacao(pos.x, pos.y, peca.dataset.tipo, true);
-        });
+            gerenciarOcupacao(pos.x, pos.y, tipo, true);
+        }
         containerLousa.scrollLeft = (vCX * fator) - (containerLousa.clientWidth / 2);
         containerLousa.scrollTop = (vCY * fator) - (containerLousa.clientHeight / 2);
     }
 
     function toggleVisibilidadeNumeros() {
-        const check = document.getElementById('toggle-cdu').checked;
-        const labels = { 'p-milhar': 'M', 'p-centena': 'C', 'p-dezena': 'D', 'p-unidade': 'U' };
-        for (let id in labels) {
-            const el = document.getElementById(id);
-            const tipo = id.replace('p-', '');
-            if (check) { el.innerText = cdu[tipo]; el.classList.add('cor-numero'); el.classList.remove('cor-label'); }
-            else { el.innerText = labels[id]; el.classList.add('cor-label'); el.classList.remove('cor-numero'); }
+        var check = document.getElementById('toggle-cdu').checked;
+        var labels = { 'p-milhar': 'M', 'p-centena': 'C', 'p-dezena': 'D', 'p-unidade': 'U' };
+        for (var id in labels) {
+            var el = document.getElementById(id); if(!el) continue; var tipo = id.replace('p-', '');
+            if (check) { el.innerText = cdu[tipo]; el.classList.add('cor-numero'); el.classList.remove('cor-label'); 
+            } else { el.innerText = labels[id]; el.classList.add('cor-label'); el.classList.remove('cor-numero'); }
         }
     }
 
     function gerenciarOcupacao(x, y, tipo, registrar) {
-        const { w, h } = obterDimensoes(tipo);
-        const gx = Math.round(x / tamanhoBase), gy = Math.round(y / tamanhoBase);
-        for (let i = 0; i < w; i++) for (let j = 0; j < h; j++) {
-            const c = `${gx + i},${gy + j}`;
-            registrar ? ocupacaoGrid.add(c) : ocupacaoGrid.delete(c);
+        var dim = obterDimensoes(tipo); var gx = Math.round(x / tamanhoBase); var gy = Math.round(y / tamanhoBase);
+        for (var i = 0; i < dim.w; i++) {
+            for (var j = 0; j < dim.h; j++) {
+                var coord = (gx + i) + ',' + (gy + j);
+                if(registrar) ocupacaoGrid[coord] = true; else delete ocupacaoGrid[coord];
+            }
         }
     }
 
     function estaLivre(x, y, tipo) {
-        const { w, h } = obterDimensoes(tipo);
-        if (x < 0 || y < 0 || x > 4000 - (w * tamanhoBase) || y > 4000 - (h * tamanhoBase)) return false;
-        const gx = Math.round(x / tamanhoBase), gy = Math.round(y / tamanhoBase);
-        for (let i = 0; i < w; i++) for (let j = 0; j < h; j++) if (ocupacaoGrid.has(`${gx + i},${gy + j}`)) return false;
+        var dim = obterDimensoes(tipo);
+        if (x < 0 || y < 0 || x > 4000 - (dim.w * tamanhoBase) || y > 4000 - (dim.h * tamanhoBase)) return false;
+        var gx = Math.round(x / tamanhoBase); var gy = Math.round(y / tamanhoBase);
+        for (var i = 0; i < dim.w; i++) {
+            for (var j = 0; j < dim.h; j++) { if (ocupacaoGrid[(gx + i) + ',' + (gy + j)]) return false; }
+        }
         return true;
     }
 
     function encontrarEspacoLivre(xIn, yIn, tipo) {
-        const { w, h } = obterDimensoes(tipo);
-        let x = Math.round(Math.max(0, Math.min(xIn, 4000 - (w * tamanhoBase))) / tamanhoBase) * tamanhoBase;
-        let y = Math.round(Math.max(0, Math.min(yIn, 4000 - (h * tamanhoBase))) / tamanhoBase) * tamanhoBase;
-        if (estaLivre(x, y, tipo)) return { x, y };
-        for (let c = 1; c < 30; c++) for (let dx = -c; dx <= c; dx++) for (let dy = -c; dy <= c; dy++) {
-            let tx = x + (dx * tamanhoBase), ty = y + (dy * tamanhoBase);
-            if (estaLivre(tx, ty, tipo)) return { x: tx, y: ty };
+        var dim = obterDimensoes(tipo);
+        var x = Math.round(Math.max(0, Math.min(xIn, 4000 - (dim.w * tamanhoBase))) / tamanhoBase) * tamanhoBase;
+        var y = Math.round(Math.max(0, Math.min(yIn, 4000 - (dim.h * tamanhoBase))) / tamanhoBase) * tamanhoBase;
+        if (estaLivre(x, y, tipo)) return { x: x, y: y };
+        for (var c = 1; c < 30; c++) {
+            for (var dx = -c; dx <= c; dx++) {
+                for (var dy = -c; dy <= c; dy++) {
+                    var tx = x + (dx * tamanhoBase); var ty = y + (dy * tamanhoBase);
+                    if (estaLivre(tx, ty, tipo)) return { x: tx, y: ty };
+                }
+            }
         }
-        return { x, y };
+        return { x: x, y: y };
     }
 
-    document.querySelectorAll('.item-peca').forEach(item => {
-        item.addEventListener('pointerdown', (e) => {
-            if (lockInteracao) return;
-            const tipo = item.dataset.tipo;
-            if (document.getElementById('toggle-limite').checked && cdu[tipo] >= 9) { 
-                mostrarAviso(`Limite de 9 para ${tipo.toUpperCase()} atingido!`); 
-                return; 
+    /* SISTEMA DE CASCATA MÁGICA */
+    function verificarCascataGeral() {
+        if (!document.getElementById('toggle-substituicao').checked) return;
+        var vCX = containerLousa.scrollLeft + (containerLousa.clientWidth / 2);
+        var vCY = containerLousa.scrollTop + (containerLousa.clientHeight / 2);
+        verificarCascata('unidade', vCX, vCY); toggleVisibilidadeNumeros();
+    }
+
+    function verificarCascata(tipoBase, xBase, yBase) {
+        var x = xBase, y = yBase;
+        var tipos = ['unidade', 'dezena', 'centena'];
+        var fezMagica = true;
+        
+        while(fezMagica) {
+            fezMagica = false;
+            for (var i=0; i<tipos.length; i++) {
+                var t = tipos[i];
+                if (cdu[t] >= 10) {
+                    var proximo = (t === 'unidade') ? 'dezena' : (t === 'dezena' ? 'centena' : 'milhar');
+                    var todas = document.querySelectorAll('.peca.' + t);
+                    
+                    // Remove apenas 10
+                    for(var k=0; k<10; k++) {
+                        if (todas[k]) {
+                            gerenciarOcupacao(parseInt(todas[k].style.left), parseInt(todas[k].style.top), t, false);
+                            todas[k].remove();
+                        }
+                    }
+                    cdu[t] -= 10;
+                    
+                    // Cria a peça de cima
+                    var nova = criarElementoPeca(proximo);
+                    var posN = encontrarEspacoLivre(x, y, proximo);
+                    nova.style.left = posN.x + 'px'; nova.style.top = posN.y + 'px';
+                    nova.classList.add('animacao-bum');
+                    
+                    // Limpa a classe para permitir drag suave depois
+                    (function(elem){ setTimeout(function(){ elem.classList.remove('animacao-bum'); }, 550); })(nova);
+
+                    lousa.appendChild(nova);
+                    gerenciarOcupacao(posN.x, posN.y, proximo, true);
+                    cdu[proximo]++;
+                    tornarArrastavel(nova, proximo);
+                    
+                    mostrarAviso("BUM! 10 " + t.toUpperCase() + "S = 1 " + proximo.toUpperCase() + "!", true);
+                    x = posN.x; y = posN.y;
+                    fezMagica = true; // Reinicia o while para checar se formou 10 do próximo
+                    break;
+                }
             }
+        }
+    }
+
+    var itensPeca = document.querySelectorAll('.item-peca');
+    for(var i=0; i<itensPeca.length; i++) {
+        itensPeca[i].addEventListener('pointerdown', function(e) {
+            fecharConfig(); if (lockInteracao) return;
+            var tipo = this.dataset.tipo;
+            var troca = document.getElementById('toggle-substituicao').checked;
+            var limite = document.getElementById('toggle-limite').checked;
+
+            if (cdu[tipo] >= 9) {
+                if (tipo === 'milhar') {
+                    if (limite) { mostrarAviso("Limite atingido!"); return; }
+                } else {
+                    if (troca) {
+                        if (cdu[tipo] >= 10) return; // Bloqueia o 11º
+                    } else if (limite) {
+                        mostrarAviso("Regra do Nunca 10: Limite de 9 atingido!"); return;
+                    }
+                }
+            }
+
             lockInteracao = true; pointerIdAtivo = e.pointerId;
             iniciarNovoArrasto(e, tipo);
         });
-    });
+    }
 
     function iniciarNovoArrasto(e, tipo) {
-        const peca = criarElementoPeca(tipo); peca.classList.add('dragging'); document.body.appendChild(peca);
-        const pos = (ev) => { peca.style.left = (ev.clientX - peca.offsetWidth / 2) + 'px'; peca.style.top = (ev.clientY - peca.offsetHeight / 2) + 'px'; };
-        pos(e);
-        const mover = (ev) => { if (ev.pointerId === pointerIdAtivo) pos(ev); };
-        const soltar = (ev) => {
+        var peca = criarElementoPeca(tipo); peca.classList.add('dragging'); document.body.appendChild(peca);
+        function posicionar(ev) { peca.style.left = (ev.clientX - peca.offsetWidth / 2) + 'px'; peca.style.top = (ev.clientY - peca.offsetHeight / 2) + 'px'; }
+        posicionar(e);
+        function mover(ev) { if (ev.pointerId === pointerIdAtivo) posicionar(ev); }
+        function soltar(ev) {
             if (ev.pointerId !== pointerIdAtivo) return;
             window.removeEventListener('pointermove', mover); window.removeEventListener('pointerup', soltar);
-            const mR = menu.getBoundingClientRect();
+            var mR = document.getElementById('menu').getBoundingClientRect();
+            
             if (ev.clientY < mR.top) {
-                const lR = lousa.getBoundingClientRect();
-                const p = encontrarEspacoLivre(ev.clientX - lR.left - (peca.offsetWidth / 2), ev.clientY - lR.top - (peca.offsetHeight / 2), tipo);
+                var lR = lousa.getBoundingClientRect();
+                var p = encontrarEspacoLivre(ev.clientX - lR.left - (peca.offsetWidth / 2), ev.clientY - lR.top - (peca.offsetHeight / 2), tipo);
                 peca.style.left = p.x + 'px'; peca.style.top = p.y + 'px'; peca.classList.remove('dragging');
                 lousa.appendChild(peca); gerenciarOcupacao(p.x, p.y, tipo, true);
-                cdu[tipo]++; toggleVisibilidadeNumeros(); tornarArrastavel(peca, tipo);
-            } else peca.remove();
+                cdu[tipo]++; tornarArrastavel(peca, tipo);
+                
+                // Mágica acontece AQUI
+                if(document.getElementById('toggle-substituicao').checked) { verificarCascata(tipo, p.x, p.y); }
+                toggleVisibilidadeNumeros();
+            } else { peca.remove(); }
             lockInteracao = false; pointerIdAtivo = null;
-        };
+        }
         window.addEventListener('pointermove', mover); window.addEventListener('pointerup', soltar);
     }
 
     function criarElementoPeca(tipo) {
-        const peca = document.createElement('div'); peca.className = `peca ${tipo}`; peca.dataset.tipo = tipo;
-        const dim = obterDimensoes(tipo);
-        
+        var peca = document.createElement('div'); peca.className = "peca " + tipo; peca.dataset.tipo = tipo;
+        var dim = obterDimensoes(tipo);
         if (tipo === 'milhar') {
-            const base = document.createElement('div');
-            base.className = 'milhar-base';
-            for(let i = 0; i < 100; i++) { 
-                const d = document.createElement('div'); d.className = 'grid-line';
-                base.appendChild(d);
-            }
+            var base = document.createElement('div'); base.className = 'milhar-base';
+            for(var i = 0; i < 100; i++) { var d = document.createElement('div'); d.className = 'grid-line'; base.appendChild(d); }
             peca.appendChild(base);
         } else if (tipo !== 'unidade') {
-            for(let i = 0; i < (dim.w * dim.h); i++) {
-                const d = document.createElement('div'); d.className = 'grid-line';
-                peca.appendChild(d);
-            }
+            for(var j = 0; j < (dim.w * dim.h); j++) { var l = document.createElement('div'); l.className = 'grid-line'; peca.appendChild(l); }
         }
         return peca;
     }
 
     function tornarArrastavel(peca, tipo) {
-        let lastTap = 0;
+        var lastTap = 0;
         peca.onpointerdown = function(e) {
-            if (lockInteracao) return;
-            const now = Date.now();
+            fecharConfig(); if (lockInteracao) return; var now = Date.now();
             if (now - lastTap < 300) { gerenciarOcupacao(parseInt(peca.style.left), parseInt(peca.style.top), tipo, false); peca.remove(); cdu[tipo]--; toggleVisibilidadeNumeros(); return; }
             lastTap = now; e.stopPropagation(); lockInteracao = true; pointerIdAtivo = e.pointerId;
             peca.classList.add('dragging'); gerenciarOcupacao(parseInt(peca.style.left), parseInt(peca.style.top), tipo, false);
-            let sX = e.clientX - peca.getBoundingClientRect().left, sY = e.clientY - peca.getBoundingClientRect().top;
-            const m = (ev) => { if (ev.pointerId === pointerIdAtivo) { const r = lousa.getBoundingClientRect(); peca.style.left = (ev.clientX - r.left - sX) + 'px'; peca.style.top = (ev.clientY - r.top - sY) + 'px'; }};
-            const u = (ev) => { if (ev.pointerId === pointerIdAtivo) { window.removeEventListener('pointermove', m); window.removeEventListener('pointerup', u); peca.classList.remove('dragging'); const p = encontrarEspacoLivre(parseInt(peca.style.left), parseInt(peca.style.top), tipo); peca.style.left = p.x + 'px'; peca.style.top = p.y + 'px'; gerenciarOcupacao(p.x, p.y, tipo, true); lockInteracao = false; pointerIdAtivo = null; }};
+            var sX = e.clientX - peca.getBoundingClientRect().left; var sY = e.clientY - peca.getBoundingClientRect().top;
+            
+            function m(ev) { if (ev.pointerId === pointerIdAtivo) { var r = lousa.getBoundingClientRect(); peca.style.left = (ev.clientX - r.left - sX) + 'px'; peca.style.top = (ev.clientY - r.top - sY) + 'px'; } }
+            function u(ev) { if (ev.pointerId === pointerIdAtivo) { window.removeEventListener('pointermove', m); window.removeEventListener('pointerup', u); peca.classList.remove('dragging'); var p = encontrarEspacoLivre(parseInt(peca.style.left), parseInt(peca.style.top), tipo); peca.style.left = p.x + 'px'; peca.style.top = p.y + 'px'; gerenciarOcupacao(p.x, p.y, tipo, true); lockInteracao = false; pointerIdAtivo = null; } }
+            
             window.addEventListener('pointermove', m); window.addEventListener('pointerup', u);
         };
     }
 
-    function limparLousa() { if(confirm("Limpar lousa?")) { lousa.innerHTML = ''; ocupacaoGrid.clear(); for(let k in cdu) cdu[k] = 0; toggleVisibilidadeNumeros(); } }
+    function limparLousa() { if(confirm("Limpar lousa?")) { lousa.innerHTML = ''; ocupacaoGrid = {}; for(var k in cdu) cdu[k] = 0; toggleVisibilidadeNumeros(); fecharConfig(); } }
     
-    // BLOQUEIA O MENU DE CONTEXTO EM TODA A APLICAÇÃO
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('selectstart', e => { if (e.target.tagName !== 'BUTTON') e.preventDefault(); });
+    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    document.addEventListener('selectstart', function(e) { if (e.target.tagName !== 'BUTTON') e.preventDefault(); });
     
-    window.addEventListener('DOMContentLoaded', () => { 
-        toggleVisibilidadeNumeros(); 
-        setTimeout(() => { containerLousa.scrollLeft = (4000 - containerLousa.clientWidth) / 2; containerLousa.scrollTop = (4000 - containerLousa.clientHeight) / 2; }, 10);
-    });
+    window.addEventListener('DOMContentLoaded', function() { toggleVisibilidadeNumeros(); setTimeout(function() { containerLousa.scrollLeft = (4000 - containerLousa.clientWidth) / 2; containerLousa.scrollTop = (4000 - containerLousa.clientHeight) / 2; }, 10); });
 </script>
 </body>
 </html>
