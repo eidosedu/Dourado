@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Material Dourado - Eidos Lite Modal (Troca Mágica)</title>
+    <title>Material Dourado - Eidos Lite Modal</title>
     <style>
         :root {
             --cor-madeira: #dfa85f;
@@ -15,7 +15,8 @@
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-touch-callout: none; -ms-touch-action: none; }
 
-        body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: sans-serif; overflow: hidden; background: #ecf0f1; }
+        /* Substituição do 100vh por ancoragem absoluta para máxima compatibilidade */
+        body { margin: 0; display: flex; flex-direction: column; position: absolute; top: 0; bottom: 0; left: 0; right: 0; font-family: sans-serif; overflow: hidden; background: #ecf0f1; }
 
         #btn-config {
             position: fixed; top: 15px; right: 15px; z-index: 2500;
@@ -24,12 +25,30 @@
             display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
 
+        /* Overlays para fechar clicando fora */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4); z-index: 2999;
+        }
+
         #modal-config {
             display: none; flex-direction: column; 
             position: fixed; top: 75px; right: 15px; z-index: 3000;
             background: #2c3e50; border: 2px solid #1a252f; border-radius: 12px;
             padding: 16px; min-width: 240px; 
         }
+
+        /* Novo modal nativo de confirmação */
+        #modal-confirm {
+            display: none; flex-direction: column;
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 4000;
+            background: #2c3e50; border: 2px solid #1a252f; border-radius: 12px;
+            padding: 20px; min-width: 280px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        #modal-confirm h3 { margin: 0 0 20px 0; color: white; font-size: 18px; }
+        .confirm-botoes { display: flex; gap: 10px; justify-content: center; }
+        .btn-confirmar { background: #e74c3c; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border-bottom: 3px solid #c0392b; flex: 1; }
+        .btn-cancelar { background: #7f8c8d; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border-bottom: 3px solid #636e72; flex: 1; }
 
         .modal-header { display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 16px; margin-bottom: 16px; border-bottom: 2px solid #1a252f; padding-bottom: 12px; }
         .btn-fechar { cursor: pointer; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; background: transparent; }
@@ -51,7 +70,7 @@
         input:checked + .slider:before { transform: translateX(24px); }
         
         input:checked#toggle-limite + .slider { background: #e67e22; border-color: #d35400;}
-        input:checked#toggle-substituicao + .slider { background: #9b59b6; border-color: #8e44ad;} /* Cor mágica roxa */
+        input:checked#toggle-substituicao + .slider { background: #9b59b6; border-color: #8e44ad;} 
 
         #toast-aviso {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
@@ -89,7 +108,6 @@
         .peca { background: var(--cor-madeira); border: 1.5px solid var(--cor-borda); position: absolute; cursor: grab; display: grid; touch-action: none; z-index: 1000; -webkit-transform: translateZ(0); }
         .peca.dragging { transform: scale(1.1) !important; opacity: 0.7 !important; z-index: 5000 !important; pointer-events: none; }
 
-        /* A ANIMAÇÃO DO SUSTO */
         @keyframes bumMagico {
             0% { transform: scale(0.2); filter: brightness(3); opacity: 0; }
             50% { transform: scale(1.5); filter: brightness(1.5); opacity: 1; z-index: 6000; }
@@ -120,6 +138,9 @@
 
 <div id="toast-aviso"></div>
 
+<div id="overlay-config" class="modal-overlay" onclick="fecharConfig()"></div>
+<div id="overlay-confirm" class="modal-overlay"></div>
+
 <div id="btn-config" onclick="abrirConfig()">
     <svg viewBox="0 0 24 24" width="28" height="28" fill="#ecf0f1">
         <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
@@ -146,7 +167,15 @@
             <div class="switch-container"><span>LIMITE (9)</span><label class="switch"><input type="checkbox" id="toggle-limite"><span class="slider"></span></label></div>
             <div class="switch-container" style="color: #f1c40f;"><span>TROCA MÁGICA (10)</span><label class="switch"><input type="checkbox" id="toggle-substituicao" onchange="verificarCascataGeral()"><span class="slider"></span></label></div>
         </div>
-        <button id="btn-limpar" onclick="limparLousa()">LIMPAR LOUSA</button>
+        <button id="btn-limpar" onclick="abrirConfirmacao()">LIMPAR LOUSA</button>
+    </div>
+</div>
+
+<div id="modal-confirm">
+    <h3>Deseja limpar toda a lousa?</h3>
+    <div class="confirm-botoes">
+        <button class="btn-cancelar" onclick="fecharConfirmacao()">CANCELAR</button>
+        <button class="btn-confirmar" onclick="executarLimparLousa()">LIMPAR</button>
     </div>
 </div>
 
@@ -175,12 +204,38 @@
 
 <script>
     function handleAndroidBack() {
-        var modal = document.getElementById('modal-config');
-        if (modal.style.display === 'flex') { fecharConfig(); } 
-        else { if (window.AppInventor) window.AppInventor.setWebViewString("FECHAR_APP"); }
+        var modalConfig = document.getElementById('modal-config');
+        var modalConfirm = document.getElementById('modal-confirm');
+        
+        if (modalConfirm.style.display === 'flex') { 
+            fecharConfirmacao(); 
+        } else if (modalConfig.style.display === 'flex') { 
+            fecharConfig(); 
+        } else { 
+            if (window.AppInventor) window.AppInventor.setWebViewString("FECHAR_APP"); 
+        }
     }
-    function abrirConfig() { document.getElementById('modal-config').style.display = 'flex'; }
-    function fecharConfig() { document.getElementById('modal-config').style.display = 'none'; }
+    
+    function abrirConfig() { 
+        document.getElementById('modal-config').style.display = 'flex'; 
+        document.getElementById('overlay-config').style.display = 'block';
+    }
+    
+    function fecharConfig() { 
+        document.getElementById('modal-config').style.display = 'none'; 
+        document.getElementById('overlay-config').style.display = 'none';
+    }
+
+    function abrirConfirmacao() {
+        fecharConfig();
+        document.getElementById('modal-confirm').style.display = 'flex';
+        document.getElementById('overlay-confirm').style.display = 'block';
+    }
+
+    function fecharConfirmacao() {
+        document.getElementById('modal-confirm').style.display = 'none';
+        document.getElementById('overlay-confirm').style.display = 'none';
+    }
 
     var tamanhoBase = 25;
     var lousa = document.getElementById('lousa');
@@ -293,7 +348,6 @@
         return { x: x, y: y };
     }
 
-    /* SISTEMA DE CASCATA MÁGICA */
     function verificarCascataGeral() {
         if (!document.getElementById('toggle-substituicao').checked) return;
         var vCX = containerLousa.scrollLeft + (containerLousa.clientWidth / 2);
@@ -314,7 +368,6 @@
                     var proximo = (t === 'unidade') ? 'dezena' : (t === 'dezena' ? 'centena' : 'milhar');
                     var todas = document.querySelectorAll('.peca.' + t);
                     
-                    // Remove apenas 10
                     for(var k=0; k<10; k++) {
                         if (todas[k]) {
                             gerenciarOcupacao(parseInt(todas[k].style.left), parseInt(todas[k].style.top), t, false);
@@ -323,13 +376,11 @@
                     }
                     cdu[t] -= 10;
                     
-                    // Cria a peça de cima
                     var nova = criarElementoPeca(proximo);
                     var posN = encontrarEspacoLivre(x, y, proximo);
                     nova.style.left = posN.x + 'px'; nova.style.top = posN.y + 'px';
                     nova.classList.add('animacao-bum');
                     
-                    // Limpa a classe para permitir drag suave depois
                     (function(elem){ setTimeout(function(){ elem.classList.remove('animacao-bum'); }, 550); })(nova);
 
                     lousa.appendChild(nova);
@@ -339,7 +390,7 @@
                     
                     mostrarAviso("BUM! 10 " + t.toUpperCase() + "S = 1 " + proximo.toUpperCase() + "!", true);
                     x = posN.x; y = posN.y;
-                    fezMagica = true; // Reinicia o while para checar se formou 10 do próximo
+                    fezMagica = true; 
                     break;
                 }
             }
@@ -359,7 +410,7 @@
                     if (limite) { mostrarAviso("Limite atingido!"); return; }
                 } else {
                     if (troca) {
-                        if (cdu[tipo] >= 10) return; // Bloqueia o 11º
+                        if (cdu[tipo] >= 10) return; 
                     } else if (limite) {
                         mostrarAviso("Regra do Nunca 10: Limite de 9 atingido!"); return;
                     }
@@ -388,7 +439,6 @@
                 lousa.appendChild(peca); gerenciarOcupacao(p.x, p.y, tipo, true);
                 cdu[tipo]++; tornarArrastavel(peca, tipo);
                 
-                // Mágica acontece AQUI
                 if(document.getElementById('toggle-substituicao').checked) { verificarCascata(tipo, p.x, p.y); }
                 toggleVisibilidadeNumeros();
             } else { peca.remove(); }
@@ -426,7 +476,9 @@
         };
     }
 
-    function limparLousa() { if(confirm("Limpar lousa?")) { lousa.innerHTML = ''; ocupacaoGrid = {}; for(var k in cdu) cdu[k] = 0; toggleVisibilidadeNumeros(); fecharConfig(); } }
+    function executarLimparLousa() {
+        lousa.innerHTML = ''; ocupacaoGrid = {}; for(var k in cdu) cdu[k] = 0; toggleVisibilidadeNumeros(); fecharConfirmacao(); 
+    }
     
     document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
     document.addEventListener('selectstart', function(e) { if (e.target.tagName !== 'BUTTON') e.preventDefault(); });
