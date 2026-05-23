@@ -15,7 +15,6 @@
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-touch-callout: none; -ms-touch-action: none; }
 
-        /* Substituição do 100vh por ancoragem absoluta para máxima compatibilidade */
         body { margin: 0; display: flex; flex-direction: column; position: absolute; top: 0; bottom: 0; left: 0; right: 0; font-family: sans-serif; overflow: hidden; background: #ecf0f1; }
 
         #btn-config {
@@ -25,7 +24,6 @@
             display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
 
-        /* Overlays para fechar clicando fora */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.4); z-index: 2999;
@@ -38,7 +36,6 @@
             padding: 16px; min-width: 240px; 
         }
 
-        /* Novo modal nativo de confirmação */
         #modal-confirm {
             display: none; flex-direction: column;
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 4000;
@@ -98,7 +95,8 @@
 
         .area-interacao { display: flex; align-items: center; gap: 8px; background: #34495e; padding: 8px 12px; border-radius: 10px; border: 2px solid #1a252f; }
         .item-peca { cursor: grab; width: 48px; height: 48px; background: #2c3e50; border: 1px solid #617083; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; }
-        .placar-cdu { font-family: 'Courier New', monospace; font-size: 30px; font-weight: bold; background: #2c3e50; width: 60px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #617083; }
+        .placar-cdu { cursor: pointer; font-family: 'Courier New', monospace; font-size: 30px; font-weight: bold; background: #2c3e50; width: 60px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #617083; transition: background 0.2s; }
+        .placar-cdu:active { background: #1a252f; }
 
         .cor-numero { color: #f1c40f !important; }
         .cor-label { color: #95a5a6 !important; font-size: 26px; }
@@ -395,6 +393,32 @@
                 }
             }
         }
+    }
+
+    // Configurando duplo clique para limpar a categoria
+    function limparCategoria(tipo) {
+        var pecas = document.querySelectorAll('.peca.' + tipo);
+        for(var i = 0; i < pecas.length; i++) {
+            var p = pecas[i];
+            gerenciarOcupacao(parseInt(p.style.left), parseInt(p.style.top), tipo, false);
+            p.remove();
+        }
+        cdu[tipo] = 0;
+        toggleVisibilidadeNumeros();
+    }
+
+    var placares = document.querySelectorAll('.placar-cdu');
+    for(var j = 0; j < placares.length; j++) {
+        var lastPlacarTap = 0;
+        placares[j].addEventListener('pointerdown', function(e) {
+            fecharConfig();
+            var now = Date.now();
+            if (now - lastPlacarTap < 300) {
+                var tipo = this.id.replace('p-', '');
+                limparCategoria(tipo);
+            }
+            lastPlacarTap = now;
+        });
     }
 
     var itensPeca = document.querySelectorAll('.item-peca');
